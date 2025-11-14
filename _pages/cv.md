@@ -11,9 +11,9 @@ redirect_from:
 
 Education
 ======
-* Ph.D in Version Control Theory, GitHub University, 2018 (expected)
-* M.S. in Jekyll, GitHub University, 2014
-* B.S. in GitHub, GitHub University, 2012
+* PhD in Energy System Optimization, Stanford University, 2028 (expected)
+* M.S. in Atmosphere/Energy, Stanford University, 2025
+* B.S. in Renewable Energy Technology and Energy Efficiency, OTH Regensburg, 2023
 
 Work experience
 ======
