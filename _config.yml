@@ -23,7 +23,7 @@ repository               : "academicpages/academicpages.github.io"
 #               Additional customization can be done by editing /_includes/author-profile.html
 author:
   # Biographic information
-  avatar           : "profile.png"
+  avatar           : "Andreas_5d.jpg"
   name             : "Andreas Mühlbauer"
   pronouns         : # example: "she/her"  
   bio              : "PhD stuend in CEE at Stanford University"
