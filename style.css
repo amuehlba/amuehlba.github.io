@@ -323,13 +323,46 @@ img {
 /* ===== Publications ===== */
 .publications-intro {
     color: var(--color-text-muted);
-    margin-bottom: 32px;
+    margin-bottom: 24px;
+}
+
+.publications-scroll-container {
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 8px;
+    border-radius: 12px;
+}
+
+/* Custom scrollbar styling */
+.publications-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.publications-scroll-container::-webkit-scrollbar-track {
+    background: var(--color-background-alt);
+    border-radius: 3px;
+}
+
+.publications-scroll-container::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+    transition: background var(--transition);
+}
+
+.publications-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}
+
+/* Firefox scrollbar */
+.publications-scroll-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) var(--color-background-alt);
 }
 
 .publications-list {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
 }
 
 .publication-item {
