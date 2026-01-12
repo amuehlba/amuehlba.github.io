@@ -207,7 +207,7 @@ img {
 
 .profile-placeholder {
     width: 240px;
-    height: 320px;
+    height: 360px;
     background: linear-gradient(135deg, var(--color-border) 0%, #CBD5E0 100%);
     border-radius: 12px;
     display: flex;
