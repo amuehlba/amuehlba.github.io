@@ -450,6 +450,122 @@ img {
     border-radius: 12px;
 }
 
+/* ===== Teaching ===== */
+.teaching-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.teaching-item {
+    padding: 24px;
+    background-color: var(--color-background);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    transition: all var(--transition);
+}
+
+.teaching-item:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.teaching-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.teaching-term {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    background-color: rgba(140, 21, 21, 0.1);
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.teaching-role {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+}
+
+.teaching-course {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.teaching-course a {
+    color: inherit;
+}
+
+.teaching-course a:hover {
+    color: var(--color-primary);
+}
+
+.teaching-institution {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+/* ===== News ===== */
+.news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.news-item {
+    padding: 24px;
+    background-color: var(--color-background-alt);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    transition: all var(--transition);
+}
+
+.news-item:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.news-date {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    background-color: rgba(140, 21, 21, 0.1);
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.news-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.news-title a {
+    color: inherit;
+}
+
+.news-title a:hover {
+    color: var(--color-primary);
+}
+
+.news-source {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
 /* ===== Contact ===== */
 .contact-content {
     max-width: 600px;
