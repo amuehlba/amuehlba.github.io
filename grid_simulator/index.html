@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grid Dispatch Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>/* Grid Dispatch Simulator — clean academic styling */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: oklch(0.22 0.01 250);
+  background: oklch(0.975 0.005 85);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; }
+
+.app {
+  max-width: 1640px;
+  margin: 0 auto;
+  padding: 20px 24px 40px;
+  min-height: 100vh;
+}
+
+/* ---- HEADER ---- */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid oklch(0.88 0.01 85);
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  background: oklch(0.97 0.008 85);
+  border: 1px solid oklch(0.85 0.01 85);
+  border-radius: 6px;
+}
+.brand-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.brand-sub { font-size: 12.5px; color: oklch(0.5 0.01 250); margin-top: 1px; }
+
+.header-right { text-align: right; }
+.date-main { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; }
+.date-season { font-size: 12px; color: oklch(0.5 0.01 250); margin-top: 2px; }
+
+/* ---- LAYOUT ---- */
+.app-body {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr) 340px;
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 1280px) {
+  .app-body { grid-template-columns: 280px minmax(0, 1fr) 300px; gap: 16px; }
+}
+@media (max-width: 1100px) {
+  .app-body { grid-template-columns: 1fr; }
+}
+
+/* ---- SECTIONS ---- */
+.section {
+  background: oklch(0.995 0.003 85);
+  border: 1px solid oklch(0.88 0.008 85);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.section-head {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid oklch(0.92 0.008 85);
+}
+.section-head h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: oklch(0.35 0.01 250);
+  display: flex; align-items: center; gap: 6px;
+}
+.section-icon { font-size: 14px; }
+.section-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: oklch(0.5 0.01 250);
+  line-height: 1.45;
+}
+.section-body { padding: 14px 16px; }
+
+/* ---- PRESETS ---- */
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.preset {
+  background: oklch(0.985 0.005 85);
+  border: 1px solid oklch(0.88 0.008 85);
+  border-radius: 5px;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s ease;
+  font-family: inherit;
+}
+.preset:hover { border-color: oklch(0.65 0.02 210); background: oklch(0.97 0.008 85); }
+.preset-active {
+  background: oklch(0.95 0.02 210);
+  border-color: oklch(0.5 0.04 210);
+  box-shadow: inset 0 0 0 1px oklch(0.5 0.04 210);
+}
+.preset-name { font-size: 12.5px; font-weight: 600; color: oklch(0.22 0.01 250); }
+.preset-sub { font-size: 11px; color: oklch(0.5 0.01 250); margin-top: 1px; line-height: 1.3; }
+
+.preset-desc {
+  margin-top: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  background: oklch(0.97 0.008 85);
+  border-left: 2px solid oklch(0.55 0.04 210);
+  color: oklch(0.32 0.01 250);
+  border-radius: 3px;
+}
+
+/* ---- CAPACITY CONTROLS ---- */
+.cap-group { margin-bottom: 14px; }
+.cap-group:last-child { margin-bottom: 0; }
+.cap-group-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: oklch(0.5 0.01 250);
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed oklch(0.88 0.008 85);
+}
+.cap-row { margin-bottom: 9px; }
+.cap-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 3px;
+}
+.cap-label {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; font-weight: 500;
+}
+.cap-swatch {
+  width: 10px; height: 10px; border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+}
+.cap-hint { color: oklch(0.6 0.01 250); font-size: 10px; cursor: help; }
+.cap-value {
+  display: flex; align-items: baseline; gap: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.cap-value input {
+  width: 52px;
+  border: 1px solid oklch(0.85 0.01 85);
+  border-radius: 3px;
+  padding: 2px 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  text-align: right;
+  background: white;
+  color: oklch(0.2 0.01 250);
+}
+.cap-value input:focus { outline: 1.5px solid oklch(0.55 0.04 210); outline-offset: 0; border-color: transparent; }
+.cap-unit { color: oklch(0.55 0.01 250); font-size: 11px; }
+
+.cap-slider-wrap { padding: 0 1px; }
+.cap-slider-wrap input[type="range"] {
+  width: 100%;
+  height: 6px;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+.cap-slider-wrap input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  background: white;
+  border: 1.5px solid oklch(0.3 0.01 250);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.cap-slider-wrap input[type="range"]::-moz-range-thumb {
+  width: 14px; height: 14px;
+  background: white;
+  border: 1.5px solid oklch(0.3 0.01 250);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.sub-slider {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px;
+  color: oklch(0.5 0.01 250);
+  margin: 3px 0 6px 18px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.sub-slider input {
+  width: 50px;
+  border: 1px solid oklch(0.88 0.008 85);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-family: inherit;
+  font-size: 11px;
+  text-align: right;
+}
+
+/* ---- DAY/WEATHER CONTROLS ---- */
+.day-controls {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: oklch(0.97 0.008 85);
+  border-radius: 5px;
+}
+@media (max-width: 900px) {
+  .day-controls { grid-template-columns: 1fr; }
+}
+.day-controls label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: oklch(0.45 0.01 250);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.day-controls label > span { display: block; margin-bottom: 5px; }
+.day-controls input[type="range"] {
+  width: 100%; height: 4px;
+  appearance: none; -webkit-appearance: none;
+  background: oklch(0.85 0.01 85);
+  border-radius: 2px;
+  outline: none;
+}
+.day-controls input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: oklch(0.3 0.01 250); cursor: pointer;
+}
+.day-controls input[type="range"]::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: oklch(0.3 0.01 250); cursor: pointer; border: 0;
+}
+.day-slider-row { display: flex; align-items: center; gap: 10px; }
+.day-slider-row input { flex: 1; }
+.day-readout { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.day-readout .mono { font-size: 12px; color: oklch(0.25 0.01 250); }
+.pill {
+  font-size: 10px; font-weight: 500; padding: 2px 7px;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid oklch(0.85 0.01 85);
+  color: oklch(0.4 0.01 250);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.season-ticks {
+  display: flex; justify-content: space-between;
+  margin-top: 4px;
+  padding: 0 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.season-ticks span {
+  font-size: 10px;
+  color: oklch(0.55 0.01 250);
+  cursor: pointer;
+  text-transform: none;
+  font-weight: 400;
+}
+.season-ticks span:hover { color: oklch(0.3 0.04 210); }
+
+.sub-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: oklch(0.5 0.01 250);
+  text-transform: none; letter-spacing: 0;
+}
+.tiny-btn {
+  background: white;
+  border: 1px solid oklch(0.85 0.01 85);
+  border-radius: 3px;
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-family: inherit;
+  cursor: pointer;
+  color: oklch(0.4 0.01 250);
+}
+.tiny-btn:hover { border-color: oklch(0.55 0.04 210); color: oklch(0.3 0.04 210); }
+
+/* ---- CHART ---- */
+.chart-wrap { width: 100%; overflow: hidden; }
+.chart-wrap.small svg { margin-top: 4px; }
+
+/* ---- LEGEND ---- */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed oklch(0.88 0.008 85);
+  font-size: 11.5px;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-swatch {
+  width: 14px; height: 10px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+}
+
+/* ---- MODE TOGGLE ---- */
+.mode-toggle { display: flex; gap: 6px; }
+.mode-toggle button {
+  flex: 1;
+  background: white;
+  border: 1px solid oklch(0.88 0.008 85);
+  border-radius: 5px;
+  padding: 9px 11px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: all 0.12s ease;
+}
+.mode-toggle button:hover { border-color: oklch(0.6 0.02 210); }
+.mode-toggle button.active {
+  background: oklch(0.95 0.02 210);
+  border-color: oklch(0.5 0.04 210);
+  box-shadow: inset 0 0 0 1px oklch(0.5 0.04 210);
+}
+.mode-name { font-size: 12px; font-weight: 600; color: oklch(0.22 0.01 250); }
+.mode-desc { font-size: 10.5px; color: oklch(0.5 0.01 250); margin-top: 2px; line-height: 1.35; }
+
+/* ---- KPIs ---- */
+.kpi {
+  padding: 10px 12px;
+  background: oklch(0.98 0.005 85);
+  border: 1px solid oklch(0.9 0.008 85);
+  border-radius: 5px;
+  margin-bottom: 6px;
+}
+.kpi-big { padding: 14px 16px; }
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
+}
+.kpi-grid .kpi { margin-bottom: 0; }
+.kpi-label {
+  font-size: 10.5px;
+  color: oklch(0.5 0.01 250);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.kpi-value { display: flex; align-items: baseline; gap: 4px; margin-top: 3px; }
+.kpi-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 500;
+  letter-spacing: -0.01em;
+  color: oklch(0.2 0.01 250);
+}
+.kpi-big .kpi-number { font-size: 32px; }
+.kpi-unit { font-size: 12px; color: oklch(0.5 0.01 250); font-family: 'JetBrains Mono', monospace; }
+.kpi-sub { font-size: 11px; color: oklch(0.5 0.01 250); margin-top: 2px; }
+
+.kpi-good { border-left: 2.5px solid oklch(0.65 0.1 150); }
+.kpi-good .kpi-number { color: oklch(0.4 0.12 150); }
+.kpi-ok   { border-left: 2.5px solid oklch(0.72 0.12 85); }
+.kpi-warn { border-left: 2.5px solid oklch(0.72 0.12 60); }
+.kpi-warn .kpi-number { color: oklch(0.45 0.1 50); }
+.kpi-bad  { border-left: 2.5px solid oklch(0.6 0.15 25); }
+.kpi-bad .kpi-number { color: oklch(0.5 0.15 25); }
+.kpi-neutral { border-left: 2.5px solid oklch(0.85 0.01 85); }
+
+/* ---- CF BARS ---- */
+.cf-list { display: flex; flex-direction: column; gap: 6px; }
+.cf-row {
+  display: grid;
+  grid-template-columns: 10px 1fr 1fr 36px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.cf-dot { width: 10px; height: 10px; border-radius: 2px; }
+.cf-label { color: oklch(0.3 0.01 250); }
+.cf-bar {
+  height: 8px;
+  background: oklch(0.92 0.008 85);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cf-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+.cf-val { text-align: right; font-size: 11.5px; color: oklch(0.35 0.01 250); }
+
+/* ---- MIX ---- */
+.mix-wrap { display: flex; flex-direction: column; gap: 10px; }
+.mix-bar {
+  display: flex;
+  height: 20px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid oklch(0.88 0.008 85);
+}
+.mix-seg { height: 100%; }
+.mix-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; }
+.mix-item { display: flex; align-items: center; gap: 5px; }
+.mix-dot { width: 9px; height: 9px; border-radius: 1.5px; }
+.mix-label { color: oklch(0.3 0.01 250); }
+.mix-val { color: oklch(0.45 0.01 250); margin-left: auto; font-size: 11px; }
+
+/* ---- NET LOAD ---- */
+.netload-stats { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.netload-stats > div {
+  display: flex; justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px dashed oklch(0.9 0.008 85);
+}
+.netload-stats > div:last-child { border-bottom: 0; }
+
+/* ---- NARRATIVE ---- */
+.narrative {
+  font-size: 13px;
+  line-height: 1.6;
+  color: oklch(0.28 0.01 250);
+  padding: 2px 0;
+}
+
+/* ---- FOOTER ---- */
+.app-footer {
+  margin-top: 30px;
+  padding-top: 14px;
+  border-top: 1px solid oklch(0.88 0.008 85);
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: oklch(0.55 0.01 250);
+}
+
+.muted { color: oklch(0.55 0.01 250); font-size: 12px; }
+</style>
+<script>window.__TWEAKS__ = {"peakGW":40,"accentHue":210,"showTeachingTips":true};</script>
+</head><body><div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+
+<script>// Synthetic load, solar, wind profiles for teaching.
+// 15-minute resolution → 96 points per day.
+// All profiles are unitless normalized shapes (0..1) except load which returns GW.
+
+const STEPS = 96;                // 15-min intervals
+const DT_HOURS = 0.25;           // 15 min = 0.25 h
+
+// --- Helpers ---
+function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+// Seeded pseudo-random (mulberry32) — so same seed gives same "weather"
+function mulberry32(seed) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// Smoothed noise via averaging a few rng draws and low-pass filtering
+function makeNoise(seed, amplitude, N = STEPS) {
+  const rng = mulberry32(seed);
+  const raw = Array.from({ length: N }, () => (rng() - 0.5) * 2);
+  // 5-point moving average for smoothness
+  const sm = raw.map((_, i) => {
+    let s = 0, c = 0;
+    for (let k = -2; k <= 2; k++) {
+      const j = i + k;
+      if (j >= 0 && j < N) { s += raw[j]; c++; }
+    }
+    return (s / c) * amplitude;
+  });
+  return sm;
+}
+
+// --- Load profile (GW) ---
+// Two humps: morning ramp + evening peak (winter shifts peak earlier/higher)
+// doy: 0..364 (day of year). 0=Jan 1
+function loadProfile({ doy = 0, peakGW = 40, noise = 0, seed = 1 } = {}) {
+  // seasonality: winter peak is ~1.15x, summer ~1.05x (AC load), shoulder ~0.85x
+  const season = seasonFromDoy(doy); // {winter:w, summer:s, shoulder:sh} weights
+  const out = [];
+  const noiseArr = makeNoise(seed * 7 + 11, noise * 0.08);
+  for (let i = 0; i < STEPS; i++) {
+    const h = i * DT_HOURS; // 0..24
+    // Winter shape: strong morning + evening peak
+    const winterShape =
+      0.55 +
+      0.25 * Math.exp(-Math.pow((h - 7.5) / 1.6, 2)) +  // morning
+      0.45 * Math.exp(-Math.pow((h - 18.5) / 2.0, 2));  // evening
+    // Summer shape: broad afternoon peak (AC)
+    const summerShape =
+      0.50 +
+      0.15 * Math.exp(-Math.pow((h - 8) / 2.0, 2)) +
+      0.55 * Math.exp(-Math.pow((h - 16) / 3.2, 2));
+    // Shoulder: milder, flatter
+    const shoulderShape =
+      0.50 +
+      0.15 * Math.exp(-Math.pow((h - 8) / 1.8, 2)) +
+      0.28 * Math.exp(-Math.pow((h - 19) / 2.2, 2));
+    let shape = winterShape * season.winter + summerShape * season.summer + shoulderShape * season.shoulder;
+    // seasonal magnitude tweak
+    const mag = 1.15 * season.winter + 1.05 * season.summer + 0.85 * season.shoulder;
+    shape = shape * mag;
+    shape += noiseArr[i];
+    out.push(clamp(shape, 0.3, 1.4) * peakGW);
+  }
+  return out;
+}
+
+// --- Solar capacity factor (0..1) ---
+// Day length varies by season. Winter: short, low peak. Summer: long, high peak.
+function solarProfile({ doy = 0, noise = 0, seed = 2 } = {}) {
+  const season = seasonFromDoy(doy);
+  // Sunrise/sunset hours (approx mid-latitude):
+  // Winter ~7:30-16:30, Summer ~5:30-20:30, Shoulder ~6:30-18:30
+  const sunrise = 7.5 * season.winter + 5.5 * season.summer + 6.5 * season.shoulder;
+  const sunset = 16.5 * season.winter + 20.5 * season.summer + 18.5 * season.shoulder;
+  const peakCF = 0.55 * season.winter + 0.92 * season.summer + 0.78 * season.shoulder;
+  const out = [];
+  // Weather: "cloudy patches" — low-freq noise that can dip solar significantly
+  const cloudRng = mulberry32(seed * 13 + 3);
+  const cloudAmp = noise * 0.6;
+  const cloudBase = Array.from({ length: STEPS }, () => cloudRng());
+  // smooth twice
+  const smooth = arr => arr.map((_, i) => {
+    let s = 0, c = 0;
+    for (let k = -3; k <= 3; k++) {
+      const j = i + k; if (j >= 0 && j < STEPS) { s += arr[j]; c++; }
+    }
+    return s / c;
+  });
+  const clouds = smooth(smooth(cloudBase));
+  for (let i = 0; i < STEPS; i++) {
+    const h = i * DT_HOURS;
+    if (h < sunrise || h > sunset) { out.push(0); continue; }
+    const t = (h - sunrise) / (sunset - sunrise); // 0..1
+    const bell = Math.sin(Math.PI * t); // 0..1..0
+    const cf = peakCF * bell * (1 - cloudAmp * clouds[i]);
+    out.push(clamp(cf, 0, 1));
+  }
+  return out;
+}
+
+// --- Wind capacity factor (0..1) ---
+// Wind is stochastic; often higher at night. Winter windier than summer on average.
+function windProfile({ doy = 0, noise = 0, seed = 3 } = {}) {
+  const season = seasonFromDoy(doy);
+  const meanCF = 0.42 * season.winter + 0.28 * season.summer + 0.35 * season.shoulder;
+  const out = [];
+  const rng = mulberry32(seed * 17 + 5);
+  // Generate low-frequency wind pattern
+  const raw = Array.from({ length: STEPS }, () => rng() - 0.5);
+  // 3x smoothing for slow-moving wind
+  let sm = raw;
+  for (let pass = 0; pass < 3; pass++) {
+    sm = sm.map((_, i) => {
+      let s = 0, c = 0;
+      for (let k = -4; k <= 4; k++) {
+        const j = i + k; if (j >= 0 && j < STEPS) { s += sm[j]; c++; }
+      }
+      return s / c;
+    });
+  }
+  // Slight nighttime boost
+  for (let i = 0; i < STEPS; i++) {
+    const h = i * DT_HOURS;
+    const diurnal = 0.08 * Math.cos((h - 3) / 24 * 2 * Math.PI); // peak at 3am
+    const variability = 0.35 + noise * 0.8;
+    const cf = meanCF + diurnal + sm[i] * variability;
+    out.push(clamp(cf, 0, 0.95));
+  }
+  return out;
+}
+
+// --- Season weighting from day-of-year ---
+// Peaks: winter=Jan15 (doy 14), summer=Jul15 (doy 195), shoulder at equinoxes
+function seasonFromDoy(doy) {
+  // Use smooth trig weights
+  const theta = (doy / 365) * 2 * Math.PI;
+  // winter peak at doy=14 → theta0 = 14/365*2π
+  const thetaW = (14 / 365) * 2 * Math.PI;
+  const thetaS = (195 / 365) * 2 * Math.PI;
+  // weight = (1+cos(θ-θ0))/2 squared to sharpen
+  const w = Math.pow((1 + Math.cos(theta - thetaW)) / 2, 1.5);
+  const s = Math.pow((1 + Math.cos(theta - thetaS)) / 2, 1.5);
+  // shoulder = 1 - (w+s) clipped
+  const sh = Math.max(0, 1 - w - s);
+  const total = w + s + sh;
+  return { winter: w / total, summer: s / total, shoulder: sh / total };
+}
+
+function seasonLabel(doy) {
+  const s = seasonFromDoy(doy);
+  if (s.winter > 0.5) return 'Winter';
+  if (s.summer > 0.5) return 'Summer';
+  if (doy > 80 && doy < 180) return 'Spring';
+  return 'Autumn';
+}
+
+function doyToDate(doy) {
+  const d = new Date(2025, 0, 1);
+  d.setDate(d.getDate() + doy);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+window.Profiles = {
+  STEPS, DT_HOURS,
+  loadProfile, solarProfile, windProfile,
+  seasonFromDoy, seasonLabel, doyToDate
+};
+</script>
+<script>// Dispatch engine. Runs the grid simulation given capacities + profiles.
+(function(){
+  var STEPS = window.Profiles.STEPS;
+  var DT_HOURS = window.Profiles.DT_HOURS;
+
+  var TECH_DEFAULTS = {
+    solar:   { color: '#E8B84A', marginalCost: 0,   co2: 0,    lcoe: 38,  label: 'Solar PV', renewable: true },
+    wind:    { color: '#6FA3B8', marginalCost: 0,   co2: 0,    lcoe: 42,  label: 'Wind',     renewable: true },
+    hydro:   { color: '#4E7A9B', marginalCost: 5,   co2: 0,    lcoe: 55,  label: 'Hydro',    renewable: true, baseload: true },
+    nuclear: { color: '#B8A5C7', marginalCost: 12,  co2: 0,    lcoe: 95,  label: 'Nuclear',  renewable: false, baseload: true },
+    gas:     { color: '#C47961', marginalCost: 55,  co2: 0.42, lcoe: 75,  label: 'Gas Peaker', renewable: false },
+    battery: { color: '#7B9E7E', marginalCost: 2,   co2: 0,    lcoe: 150, label: 'Battery',  renewable: false, storage: true },
+    phs:     { color: '#5D7F8A', marginalCost: 3,   co2: 0,    lcoe: 110, label: 'Pumped Hydro', renewable: false, storage: true },
+    dr:      { color: '#A89078', marginalCost: 200, co2: 0,    lcoe: 0,   label: 'Demand Response', renewable: false }
+  };
+
+  function clamp2(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+
+  function runDispatch(opts) {
+    var capacities = opts.capacities;
+    var profiles = opts.profiles;
+    var mode = opts.mode || 'priority';
+    var n = STEPS;
+    var gen = {
+      solar: new Array(n).fill(0), wind: new Array(n).fill(0),
+      hydro: new Array(n).fill(0), nuclear: new Array(n).fill(0),
+      gas: new Array(n).fill(0), battery: new Array(n).fill(0),
+      phs: new Array(n).fill(0), dr: new Array(n).fill(0)
+    };
+    var charge = { battery: new Array(n).fill(0), phs: new Array(n).fill(0) };
+    var curtail = new Array(n).fill(0);
+    var unmet = new Array(n).fill(0);
+
+    var battEnergy = capacities.batteryEnergy != null ? capacities.batteryEnergy : capacities.battery * 4;
+    var phsEnergy  = capacities.phsEnergy != null ? capacities.phsEnergy : capacities.phs * 10;
+    var battEff = 0.90, phsEff = 0.80;
+    var battSoC = battEnergy * 0.5;
+    var phsSoC  = phsEnergy  * 0.5;
+    var battSoCArr = new Array(n).fill(0);
+    var phsSoCArr = new Array(n).fill(0);
+
+    for (var i = 0; i < n; i++) {
+      var load = profiles.load[i];
+      var solarAvail   = capacities.solar   * profiles.solarCF[i];
+      var windAvail    = capacities.wind    * profiles.windCF[i];
+      var hydroAvail   = capacities.hydro   * 0.75;
+      var nuclearAvail = capacities.nuclear * 0.95;
+
+      var nucMustRun = mode === 'priority' ? nuclearAvail : 0;
+      gen.nuclear[i] = nucMustRun;
+      gen.hydro[i]   = hydroAvail;
+      gen.solar[i]   = solarAvail;
+      gen.wind[i]    = windAvail;
+      var supply = gen.nuclear[i] + gen.hydro[i] + gen.solar[i] + gen.wind[i];
+      var remaining = load - supply;
+
+      if (remaining < 0) {
+        var surplus = -remaining;
+        var battChargePower = Math.min(capacities.battery, surplus,
+          Math.max(0, (battEnergy - battSoC) / (DT_HOURS * battEff)));
+        charge.battery[i] = battChargePower;
+        battSoC += battChargePower * DT_HOURS * battEff;
+        surplus -= battChargePower;
+        var phsChargePower = Math.min(capacities.phs, surplus,
+          Math.max(0, (phsEnergy - phsSoC) / (DT_HOURS * phsEff)));
+        charge.phs[i] = phsChargePower;
+        phsSoC += phsChargePower * DT_HOURS * phsEff;
+        surplus -= phsChargePower;
+        curtail[i] = Math.max(0, surplus);
+      } else if (remaining > 0) {
+        if (mode === 'merit' && nuclearAvail > 0) {
+          var nucD = Math.min(nuclearAvail, remaining);
+          gen.nuclear[i] = nucD;
+          remaining -= nucD;
+        }
+        if (remaining > 0 && capacities.battery > 0) {
+          var bp = Math.min(capacities.battery, remaining, Math.max(0, battSoC / DT_HOURS));
+          gen.battery[i] = bp;
+          battSoC -= bp * DT_HOURS / battEff;
+          remaining -= bp;
+        }
+        if (remaining > 0 && capacities.phs > 0) {
+          var pp = Math.min(capacities.phs, remaining, Math.max(0, phsSoC / DT_HOURS));
+          gen.phs[i] = pp;
+          phsSoC -= pp * DT_HOURS / phsEff;
+          remaining -= pp;
+        }
+        if (remaining > 0 && capacities.gas > 0) {
+          var gp = Math.min(capacities.gas, remaining);
+          gen.gas[i] = gp;
+          remaining -= gp;
+        }
+        if (remaining > 0 && capacities.dr > 0) {
+          var dp = Math.min(capacities.dr, remaining);
+          gen.dr[i] = dp;
+          remaining -= dp;
+        }
+        unmet[i] = Math.max(0, remaining);
+      }
+      battSoC = clamp2(battSoC, 0, battEnergy);
+      phsSoC  = clamp2(phsSoC, 0, phsEnergy);
+      battSoCArr[i] = battSoC;
+      phsSoCArr[i]  = phsSoC;
+    }
+
+    var totEnergy = function(k){ var s=0; for (var i=0;i<n;i++) s += gen[k][i]; return s * DT_HOURS; };
+    var energyByTech = {
+      solar: totEnergy('solar'), wind: totEnergy('wind'),
+      hydro: totEnergy('hydro'), nuclear: totEnergy('nuclear'),
+      gas: totEnergy('gas'), battery: totEnergy('battery'),
+      phs: totEnergy('phs'), dr: totEnergy('dr')
+    };
+    var totalLoad = 0; for (var i=0;i<n;i++) totalLoad += profiles.load[i]; totalLoad *= DT_HOURS;
+    var totalGen = 0; for (var k in energyByTech) totalGen += energyByTech[k];
+    var renewableEnergy = energyByTech.solar + energyByTech.wind + energyByTech.hydro;
+    var renewablePct = totalLoad > 0 ? (renewableEnergy / totalLoad) * 100 : 0;
+    var curtailEnergy = 0; for (var i=0;i<n;i++) curtailEnergy += curtail[i]; curtailEnergy *= DT_HOURS;
+    var unmetEnergy = 0; var unmetSteps = 0;
+    for (var i=0;i<n;i++) { unmetEnergy += unmet[i]; if (unmet[i] > 0.001) unmetSteps++; }
+    unmetEnergy *= DT_HOURS;
+    var unmetHours = unmetSteps * DT_HOURS;
+    var co2Tons = energyByTech.gas * 1000 * TECH_DEFAULTS.gas.co2;
+
+    var cf = {};
+    var cfKeys = ['solar','wind','hydro','nuclear','gas'];
+    for (var ci=0; ci<cfKeys.length; ci++) {
+      var k2 = cfKeys[ci];
+      cf[k2] = capacities[k2] > 0 ? (energyByTech[k2] / (capacities[k2] * 24) * 100) : 0;
+    }
+    var totalCost = 0;
+    for (var k in TECH_DEFAULTS) totalCost += energyByTech[k] * TECH_DEFAULTS[k].lcoe;
+    totalCost += unmetEnergy * 5000 * 1000;
+    var servedEnergy = totalLoad - unmetEnergy;
+    var systemLCOE = servedEnergy > 0 ? totalCost / servedEnergy : 0;
+    var netLoad = []; var peakNetLoad = -Infinity, minNetLoad = Infinity;
+    for (var i=0;i<n;i++){
+      var nl = profiles.load[i] - gen.solar[i] - gen.wind[i];
+      netLoad.push(nl);
+      if (nl > peakNetLoad) peakNetLoad = nl;
+      if (nl < minNetLoad) minNetLoad = nl;
+    }
+
+    return {
+      gen: gen, charge: charge, curtail: curtail, unmet: unmet,
+      battSoC: battSoCArr, phsSoC: phsSoCArr,
+      battEnergy: battEnergy, phsEnergy: phsEnergy,
+      kpis: {
+        renewablePct: renewablePct, totalLoad: totalLoad, totalGen: totalGen,
+        renewableEnergy: renewableEnergy, curtailEnergy: curtailEnergy,
+        unmetEnergy: unmetEnergy, unmetHours: unmetHours,
+        co2Tons: co2Tons, cf: cf, systemLCOE: systemLCOE,
+        peakNetLoad: peakNetLoad, minNetLoad: minNetLoad,
+        energyByTech: energyByTech
+      }
+    };
+  }
+
+  window.Dispatch = { runDispatch: runDispatch, TECH_DEFAULTS: TECH_DEFAULTS };
+})();
+</script>
+<script>// Scenario presets for teaching. Capacities in GW; battery/phs values are power GW,
+// and batteryEnergy/phsEnergy are GWh. peakGW = peak daily load.
+
+const PRESETS = [
+  {
+    id: 'fossil',
+    name: 'All Fossil',
+    subtitle: 'Mid-20th century grid',
+    description: "A system built around large thermal plants. Reliable but emissions-heavy. Notice how gas must ramp up and down to follow load — expensive and carbon-intensive.",
+    capacities: {
+      solar: 0, wind: 0, hydro: 2, nuclear: 0,
+      gas: 50, battery: 0, batteryEnergy: 0, phs: 0, phsEnergy: 0, dr: 2,
+    },
+    mode: 'merit',
+  },
+  {
+    id: 'nuclear-heavy',
+    name: 'Nuclear Baseload',
+    subtitle: '“French grid” style',
+    description: "Large nuclear fleet covers most demand; gas fills peaks. Very low emissions but inflexible — nuclear can't quickly follow load, so extra renewables would cause curtailment.",
+    capacities: {
+      solar: 5, wind: 5, hydro: 4, nuclear: 30,
+      gas: 15, battery: 0, batteryEnergy: 0, phs: 2, phsEnergy: 20, dr: 2,
+    },
+    mode: 'priority',
+  },
+  {
+    id: 'renewables-no-storage',
+    name: 'High Renewables, No Storage',
+    subtitle: 'The curtailment problem',
+    description: "Lots of solar and wind but nothing to store their surplus. Watch the midday curtailment spike — renewable energy literally wasted because supply exceeds demand.",
+    capacities: {
+      solar: 35, wind: 25, hydro: 3, nuclear: 0,
+      gas: 25, battery: 0, batteryEnergy: 0, phs: 0, phsEnergy: 0, dr: 2,
+    },
+    mode: 'merit',
+  },
+  {
+    id: 'renewables-storage',
+    name: 'Renewables + Storage',
+    subtitle: 'The modern answer',
+    description: "Storage shifts midday solar into the evening peak. Notice how batteries charge during the solar bell and discharge after sunset — smoothing the duck curve.",
+    capacities: {
+      solar: 30, wind: 22, hydro: 3, nuclear: 0,
+      gas: 12, battery: 10, batteryEnergy: 40, phs: 4, phsEnergy: 40, dr: 3,
+    },
+    mode: 'merit',
+  },
+  {
+    id: '100-renewable',
+    name: '100% Renewable',
+    subtitle: 'Ambitious net-zero grid',
+    description: "No fossil fuels at all. Requires massive overbuild of renewables AND storage. Check for unmet load — on a bad weather day, there may be blackouts unless storage is huge.",
+    capacities: {
+      solar: 45, wind: 35, hydro: 5, nuclear: 0,
+      gas: 0, battery: 18, batteryEnergy: 72, phs: 8, phsEnergy: 100, dr: 5,
+    },
+    mode: 'merit',
+  },
+  {
+    id: 'balanced',
+    name: 'Balanced Mix',
+    subtitle: "Today's typical grid",
+    description: "A realistic mid-transition grid: some nuclear, a lot of renewables, storage growing, gas still covering peaks. This is roughly where many grids are heading.",
+    capacities: {
+      solar: 22, wind: 18, hydro: 3, nuclear: 12,
+      gas: 15, battery: 6, batteryEnergy: 24, phs: 3, phsEnergy: 30, dr: 3,
+    },
+    mode: 'merit',
+  },
+];
+
+window.Presets = PRESETS;
+</script>
+<script>// UI primitives (pre-compiled from JSX)
+const {
+  useState,
+  useRef,
+  useEffect
+} = React;
+function CapacitySlider({label, color, value, onChange, min = 0, max = 60, step = 0.5, unit = 'GW', hint, icon}) {
+  const pct = (value - min) / (max - min) * 100;
+  return React.createElement("div", {className: "cap-row"}, React.createElement("div", {className: "cap-header"}, React.createElement("div", {className: "cap-label"}, React.createElement("span", {className: "cap-swatch", style: {background: color}}), React.createElement("span", null, label), hint && React.createElement("span", {className: "cap-hint", title: hint}, "\u24D8")), React.createElement("div", {className: "cap-value"}, React.createElement("input", {type: "number", value: value, min: min, max: max, step: step, onChange: e => { const v = parseFloat(e.target.value); if (!isNaN(v)) onChange(Math.max(min, Math.min(max, v))); }}), React.createElement("span", {className: "cap-unit"}, unit))), React.createElement("div", {className: "cap-slider-wrap"}, React.createElement("input", {type: "range", min: min, max: max, step: step, value: value, onChange: e => onChange(parseFloat(e.target.value)), style: {background: `linear-gradient(to right, ${color} 0%, ${color} ${pct}%, #e5e1d8 ${pct}%, #e5e1d8 100%)`}})));
+}
+function KPICard({label, value, unit, sub, tone = 'neutral', big}) {
+  return React.createElement("div", {className: `kpi kpi-${tone} ${big ? 'kpi-big' : ''}`}, React.createElement("div", {className: "kpi-label"}, label), React.createElement("div", {className: "kpi-value"}, React.createElement("span", {className: "kpi-number"}, value), unit && React.createElement("span", {className: "kpi-unit"}, unit)), sub && React.createElement("div", {className: "kpi-sub"}, sub));
+}
+function PresetCard({preset, active, onClick}) {
+  return React.createElement("button", {className: `preset ${active ? 'preset-active' : ''}`, onClick: onClick}, React.createElement("div", {className: "preset-name"}, preset.name), React.createElement("div", {className: "preset-sub"}, preset.subtitle));
+}
+function Legend({items}) {
+  return React.createElement("div", {className: "legend"}, items.map(it => React.createElement("div", {key: it.key, className: "legend-item"}, React.createElement("span", {className: "legend-swatch", style: {background: it.color, ...(it.pattern === 'hatch' ? {backgroundImage: 'repeating-linear-gradient(45deg, #E8B84A 0 2px, transparent 2px 5px)', backgroundColor: 'rgba(232,184,74,0.15)'} : {})}}), React.createElement("span", {className: "legend-label"}, it.label))));
+}
+window.UI = { CapacitySlider, KPICard, PresetCard, Legend };
+</script>
+<script>// Chart components: stacked-area dispatch + SoC line + load line.
+// Pure SVG for crispness at any zoom.
+
+const {
+  useMemo
+} = React;
+const TECH_ORDER_STACK = ['nuclear', 'hydro', 'wind', 'solar', 'battery', 'phs', 'gas', 'dr'];
+const getTC = () => window.Dispatch.TECH_DEFAULTS;
+function DispatchChart({
+  result,
+  profiles,
+  width = 720,
+  height = 360
+}) {
+  const {
+    gen,
+    curtail,
+    unmet
+  } = result;
+  const load = profiles.load;
+  const n = load.length;
+
+  // Y range — include everything (generation + curtailment atop)
+  const stacked = [];
+  let maxY = 0;
+  for (let i = 0; i < n; i++) {
+    let y = 0;
+    const layer = {};
+    for (const k of TECH_ORDER_STACK) {
+      const v = gen[k][i] || 0;
+      layer[k] = {
+        y0: y,
+        y1: y + v
+      };
+      y += v;
+    }
+    layer._curtail = {
+      y0: y,
+      y1: y + (curtail[i] || 0)
+    };
+    y += curtail[i] || 0;
+    stacked.push(layer);
+    maxY = Math.max(maxY, y, load[i]);
+  }
+  maxY = Math.ceil(maxY / 5) * 5 + 2;
+  const padL = 52,
+    padR = 12,
+    padT = 16,
+    padB = 40;
+  const plotW = width - padL - padR;
+  const plotH = height - padT - padB;
+  const xScale = i => padL + i / (n - 1) * plotW;
+  const yScale = v => padT + plotH - v / maxY * plotH;
+
+  // Build SVG paths for each stacked band
+  const bands = TECH_ORDER_STACK.map(k => {
+    let topPts = [],
+      botPts = [];
+    for (let i = 0; i < n; i++) {
+      topPts.push(`${xScale(i).toFixed(1)},${yScale(stacked[i][k].y1).toFixed(1)}`);
+      botPts.push(`${xScale(i).toFixed(1)},${yScale(stacked[i][k].y0).toFixed(1)}`);
+    }
+    const d = `M ${topPts.join(' L ')} L ${botPts.reverse().join(' L ')} Z`;
+    return {
+      key: k,
+      d,
+      color: getTC()[k].color,
+      label: getTC()[k].label
+    };
+  });
+
+  // Curtailment band (hatched, on top of stack)
+  const curtailTop = stacked.map((s, i) => `${xScale(i).toFixed(1)},${yScale(s._curtail.y1).toFixed(1)}`);
+  const curtailBot = stacked.map((s, i) => `${xScale(i).toFixed(1)},${yScale(s._curtail.y0).toFixed(1)}`).reverse();
+  const curtailD = `M ${curtailTop.join(' L ')} L ${curtailBot.join(' L ')} Z`;
+
+  // Unmet: red band at load level (overlay)
+  const unmetTop = load.map((l, i) => `${xScale(i).toFixed(1)},${yScale(l).toFixed(1)}`);
+  const unmetBot = load.map((l, i) => `${xScale(i).toFixed(1)},${yScale(l - unmet[i]).toFixed(1)}`).reverse();
+  const unmetD = unmet.some(u => u > 0.01) ? `M ${unmetTop.join(' L ')} L ${unmetBot.join(' L ')} Z` : null;
+
+  // Load line
+  const loadPath = 'M ' + load.map((l, i) => `${xScale(i).toFixed(1)},${yScale(l).toFixed(1)}`).join(' L ');
+
+  // Y-axis ticks
+  const ticks = [];
+  const tickCount = 5;
+  for (let t = 0; t <= tickCount; t++) {
+    const v = maxY * t / tickCount;
+    ticks.push({
+      v,
+      y: yScale(v)
+    });
+  }
+  // X-axis ticks every 3 hours
+  const xTicks = [];
+  for (let h = 0; h <= 24; h += 3) {
+    const i = h / 24 * (n - 1);
+    xTicks.push({
+      h,
+      x: xScale(i)
+    });
+  }
+  return /*#__PURE__*/React.createElement("svg", {
+    width: width,
+    height: height,
+    viewBox: `0 0 ${width} ${height}`,
+    style: {
+      display: 'block'
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("pattern", {
+    id: "curtailHatch",
+    patternUnits: "userSpaceOnUse",
+    width: "6",
+    height: "6",
+    patternTransform: "rotate(45)"
+  }, /*#__PURE__*/React.createElement("rect", {
+    width: "6",
+    height: "6",
+    fill: "#E8B84A",
+    fillOpacity: "0.18"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "6",
+    stroke: "#E8B84A",
+    strokeWidth: "1.5",
+    strokeOpacity: "0.85"
+  })), /*#__PURE__*/React.createElement("pattern", {
+    id: "unmetHatch",
+    patternUnits: "userSpaceOnUse",
+    width: "5",
+    height: "5",
+    patternTransform: "rotate(-45)"
+  }, /*#__PURE__*/React.createElement("rect", {
+    width: "5",
+    height: "5",
+    fill: "#C94A4A",
+    fillOpacity: "0.2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "5",
+    stroke: "#C94A4A",
+    strokeWidth: "1.4"
+  }))), ticks.map((t, i) => /*#__PURE__*/React.createElement("g", {
+    key: i
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: padL,
+    x2: width - padR,
+    y1: t.y,
+    y2: t.y,
+    stroke: "#000",
+    strokeOpacity: t.v === 0 ? 0.5 : 0.08,
+    strokeWidth: t.v === 0 ? 1 : 1
+  }), /*#__PURE__*/React.createElement("text", {
+    x: padL - 8,
+    y: t.y + 4,
+    textAnchor: "end",
+    fontSize: "11",
+    fill: "#555",
+    fontFamily: "'JetBrains Mono', monospace"
+  }, t.v.toFixed(0)))), /*#__PURE__*/React.createElement("text", {
+    x: 12,
+    y: padT + plotH / 2,
+    fontSize: "11",
+    fill: "#555",
+    transform: `rotate(-90 12 ${padT + plotH / 2})`,
+    textAnchor: "middle"
+  }, "Power (GW)"), bands.map(b => /*#__PURE__*/React.createElement("path", {
+    key: b.key,
+    d: b.d,
+    fill: b.color,
+    fillOpacity: "0.88",
+    stroke: b.color,
+    strokeWidth: "0.5"
+  })), /*#__PURE__*/React.createElement("path", {
+    d: curtailD,
+    fill: "url(#curtailHatch)",
+    stroke: "#B8852A",
+    strokeWidth: "0.5",
+    strokeOpacity: "0.7"
+  }), unmetD && /*#__PURE__*/React.createElement("path", {
+    d: unmetD,
+    fill: "url(#unmetHatch)",
+    stroke: "#C94A4A",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: loadPath,
+    fill: "none",
+    stroke: "#1a1a1a",
+    strokeWidth: "2",
+    strokeLinejoin: "round"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: loadPath,
+    fill: "none",
+    stroke: "#1a1a1a",
+    strokeWidth: "2",
+    strokeLinejoin: "round",
+    strokeDasharray: "0"
+  }), xTicks.map((t, i) => /*#__PURE__*/React.createElement("g", {
+    key: i
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: t.x,
+    x2: t.x,
+    y1: padT + plotH,
+    y2: padT + plotH + 4,
+    stroke: "#555"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: t.x,
+    y: padT + plotH + 18,
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "#555",
+    fontFamily: "'JetBrains Mono', monospace"
+  }, String(t.h).padStart(2, '0'), ":00"))), /*#__PURE__*/React.createElement("text", {
+    x: padL + plotW / 2,
+    y: height - 6,
+    textAnchor: "middle",
+    fontSize: "11",
+    fill: "#555"
+  }, "Hour of day"));
+}
+function StorageChart({
+  result,
+  width = 720,
+  height = 120
+}) {
+  const n = result.battSoC.length;
+  const padL = 52,
+    padR = 12,
+    padT = 10,
+    padB = 28;
+  const plotW = width - padL - padR;
+  const plotH = height - padT - padB;
+  const maxE = Math.max(result.battEnergy, result.phsEnergy, 1);
+  const xScale = i => padL + i / (n - 1) * plotW;
+  const yScale = v => padT + plotH - v / maxE * plotH;
+  const battPath = 'M ' + result.battSoC.map((v, i) => `${xScale(i).toFixed(1)},${yScale(v).toFixed(1)}`).join(' L ');
+  const phsPath = 'M ' + result.phsSoC.map((v, i) => `${xScale(i).toFixed(1)},${yScale(v).toFixed(1)}`).join(' L ');
+  const ticks = [0, 0.5, 1].map(f => ({
+    v: maxE * f,
+    y: yScale(maxE * f)
+  }));
+  const xTicks = [];
+  for (let h = 0; h <= 24; h += 6) {
+    xTicks.push({
+      h,
+      x: xScale(h / 24 * (n - 1))
+    });
+  }
+  return /*#__PURE__*/React.createElement("svg", {
+    width: width,
+    height: height,
+    viewBox: `0 0 ${width} ${height}`,
+    style: {
+      display: 'block'
+    }
+  }, ticks.map((t, i) => /*#__PURE__*/React.createElement("g", {
+    key: i
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: padL,
+    x2: width - padR,
+    y1: t.y,
+    y2: t.y,
+    stroke: "#000",
+    strokeOpacity: "0.08"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: padL - 8,
+    y: t.y + 4,
+    textAnchor: "end",
+    fontSize: "10",
+    fill: "#666",
+    fontFamily: "'JetBrains Mono', monospace"
+  }, t.v.toFixed(0)))), /*#__PURE__*/React.createElement("text", {
+    x: 12,
+    y: padT + plotH / 2,
+    fontSize: "10",
+    fill: "#666",
+    transform: `rotate(-90 12 ${padT + plotH / 2})`,
+    textAnchor: "middle"
+  }, "Stored (GWh)"), result.battEnergy > 0 && /*#__PURE__*/React.createElement("path", {
+    d: battPath,
+    fill: "none",
+    stroke: getTC().battery.color,
+    strokeWidth: "2"
+  }), result.phsEnergy > 0 && /*#__PURE__*/React.createElement("path", {
+    d: phsPath,
+    fill: "none",
+    stroke: getTC().phs.color,
+    strokeWidth: "2",
+    strokeDasharray: "4 3"
+  }), xTicks.map((t, i) => /*#__PURE__*/React.createElement("g", {
+    key: i
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: t.x,
+    x2: t.x,
+    y1: padT + plotH,
+    y2: padT + plotH + 3,
+    stroke: "#666"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: t.x,
+    y: padT + plotH + 16,
+    textAnchor: "middle",
+    fontSize: "10",
+    fill: "#666",
+    fontFamily: "'JetBrains Mono', monospace"
+  }, String(t.h).padStart(2, '0'), ":00"))));
+}
+window.Charts = {
+  DispatchChart,
+  StorageChart,
+  TECH_ORDER_STACK
+};
+</script>
+<script>// Main Simulator app.
+const {
+  runDispatch,
+  TECH_DEFAULTS
+} = window.Dispatch;
+
+// Read the tweakable defaults block from DOM if present.
+function getTweaks() {
+  return window.__TWEAKS__ || {
+    peakGW: 40,
+    accentHue: 210,
+    fontFamily: 'Inter',
+    showTeachingTips: true
+  };
+}
+function App() {
+  const tweaks = getTweaks();
+  const [capacities, setCapacities] = useState({
+    solar: 22,
+    wind: 18,
+    hydro: 3,
+    nuclear: 12,
+    gas: 15,
+    battery: 6,
+    batteryEnergy: 24,
+    phs: 3,
+    phsEnergy: 30,
+    dr: 3
+  });
+  const [mode, setMode] = useState('merit');
+  const [doy, setDoy] = useState(14); // default: mid-January (winter)
+  const [noise, setNoise] = useState(0.3);
+  const [seed, setSeed] = useState(7);
+  const [activePreset, setActivePreset] = useState('balanced');
+  const peakGW = tweaks.peakGW || 40;
+
+  // Build profiles
+  const profiles = useMemo(() => ({
+    load: loadProfile({
+      doy,
+      peakGW,
+      noise,
+      seed
+    }),
+    solarCF: solarProfile({
+      doy,
+      noise,
+      seed
+    }),
+    windCF: windProfile({
+      doy,
+      noise,
+      seed
+    })
+  }), [doy, peakGW, noise, seed]);
+
+  // Run dispatch
+  const result = useMemo(() => runDispatch({
+    capacities,
+    profiles,
+    mode
+  }), [capacities, profiles, mode]);
+  const setCap = (k, v) => {
+    setCapacities(c => {
+      const next = {
+        ...c,
+        [k]: v
+      };
+      // Auto-scale storage energy if power changes (keep duration)
+      if (k === 'battery') next.batteryEnergy = +(v * 4).toFixed(1);
+      if (k === 'phs') next.phsEnergy = +(v * 10).toFixed(1);
+      return next;
+    });
+    setActivePreset(null);
+  };
+  const applyPreset = preset => {
+    setCapacities({
+      ...preset.capacities
+    });
+    setMode(preset.mode);
+    setActivePreset(preset.id);
+  };
+  const {
+    kpis
+  } = result;
+  const season = seasonLabel(doy);
+  const dateStr = doyToDate(doy);
+
+  // Auto-narrative: "what's happening" — short contextual teaching note
+  const narrative = useMemo(() => buildNarrative(result, capacities, mode, season), [result, capacities, mode, season]);
+  const legendItems = [{
+    key: 'nuclear',
+    color: TECH_DEFAULTS.nuclear.color,
+    label: 'Nuclear'
+  }, {
+    key: 'hydro',
+    color: TECH_DEFAULTS.hydro.color,
+    label: 'Hydro'
+  }, {
+    key: 'wind',
+    color: TECH_DEFAULTS.wind.color,
+    label: 'Wind'
+  }, {
+    key: 'solar',
+    color: TECH_DEFAULTS.solar.color,
+    label: 'Solar'
+  }, {
+    key: 'battery',
+    color: TECH_DEFAULTS.battery.color,
+    label: 'Battery'
+  }, {
+    key: 'phs',
+    color: TECH_DEFAULTS.phs.color,
+    label: 'Pumped Hydro'
+  }, {
+    key: 'gas',
+    color: TECH_DEFAULTS.gas.color,
+    label: 'Gas Peaker'
+  }, {
+    key: 'dr',
+    color: TECH_DEFAULTS.dr.color,
+    label: 'Demand Resp.'
+  }, {
+    key: 'curt',
+    color: '#E8B84A',
+    label: 'Curtailed (wasted)',
+    pattern: 'hatch'
+  }, {
+    key: 'load',
+    color: '#1a1a1a',
+    label: 'Demand'
+  }];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "app"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "app-header"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "brand"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "brand-mark"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 32 32",
+    width: "28",
+    height: "28"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "16",
+    cy: "16",
+    r: "14",
+    fill: "none",
+    stroke: "#1a1a1a",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M 4 18 Q 10 10, 16 18 T 28 18",
+    fill: "none",
+    stroke: "#1a1a1a",
+    strokeWidth: "1.5"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "16",
+    cy: "16",
+    r: "2",
+    fill: "#1a1a1a"
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "brand-title"
+  }, "Grid Dispatch Simulator"), /*#__PURE__*/React.createElement("div", {
+    className: "brand-sub"
+  }, "A teaching tool for renewable energy systems"))), /*#__PURE__*/React.createElement("div", {
+    className: "header-right"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "date-display"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "date-main"
+  }, dateStr), /*#__PURE__*/React.createElement("div", {
+    className: "date-season"
+  }, season, " day \xB7 15-min resolution")))), /*#__PURE__*/React.createElement("div", {
+    className: "app-body"
+  }, /*#__PURE__*/React.createElement("aside", {
+    className: "col-left"
+  }, /*#__PURE__*/React.createElement(Section, {
+    title: "Scenarios",
+    subtitle: "Start from a teaching preset, then tweak."
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "preset-grid"
+  }, PRESETS.map(p => /*#__PURE__*/React.createElement(PresetCard, {
+    key: p.id,
+    preset: p,
+    active: activePreset === p.id,
+    onClick: () => applyPreset(p)
+  }))), activePreset && /*#__PURE__*/React.createElement("div", {
+    className: "preset-desc"
+  }, PRESETS.find(p => p.id === activePreset)?.description)), /*#__PURE__*/React.createElement(Section, {
+    title: "Installed Capacity",
+    subtitle: "Drag sliders or type exact values."
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cap-group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cap-group-title"
+  }, "Renewables"), /*#__PURE__*/React.createElement(CapacitySlider, {
+    label: "Solar PV",
+    color: TECH_DEFAULTS.solar.color,
+    value: capacities.solar,
+    onChange: v => setCap('solar', v),
+    max: 60
+  }), /*#__PURE__*/React.createElement(CapacitySlider, {
+    label: "Wind",
+    color: TECH_DEFAULTS.wind.color,
+    value: capacities.wind,
+    onChange: v => setCap('wind', v),
+    max: 60
+  }), /*#__PURE__*/React.createElement(CapacitySlider, {
+    label: "Hydro (run-of-river)",
+    color: TECH_DEFAULTS.hydro.color,
+    value: capacities.hydro,
+    onChange: v => setCap('hydro', v),
+    max: 20
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "cap-group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cap-group-title"
+  }, "Firm / Baseload"), /*#__PURE__*/React.createElement(CapacitySlider, {
+    label: "Nuclear",
+    color: TECH_DEFAULTS.nuclear.color,
+    value: capacities.nuclear,
+    onChange: v => setCap('nuclear', v),
+    max: 50
+  }), /*#__PURE__*/React.createElement(CapacitySlider, {
+    label: "Gas Peaker",
+    color: TECH_DEFAULTS.gas.color,
+    value: capacities.gas,
+    onChange: v => setCap('gas', v),
+    max: 60
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "cap-group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cap-group-title"
+  }, "Storage"), /*#__PURE__*/React.createElement(CapacitySlider, {
+    label: "Battery power",
+    color: TECH_DEFAULTS.battery.color,
+    value: capacities.battery,
+    onChange: v => setCap('battery', v),
+    max: 30
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "sub-slider"
+  }, /*#__PURE__*/React.createElement("span", null, "energy (duration = ", capacities.battery > 0 ? (capacities.batteryEnergy / capacities.battery).toFixed(1) : '\u2014', " h)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: capacities.batteryEnergy,
+    onChange: e => setCapacities(c => ({
+      ...c,
+      batteryEnergy: parseFloat(e.target.value) || 0
+    })),
+    min: 0,
+    max: 200,
+    step: 1
+  }), /*#__PURE__*/React.createElement("span", null, "GWh")), /*#__PURE__*/React.createElement(CapacitySlider, {
+    label: "Pumped hydro power",
+    color: TECH_DEFAULTS.phs.color,
+    value: capacities.phs,
+    onChange: v => setCap('phs', v),
+    max: 20
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "sub-slider"
+  }, /*#__PURE__*/React.createElement("span", null, "energy (duration = ", capacities.phs > 0 ? (capacities.phsEnergy / capacities.phs).toFixed(1) : '\u2014', " h)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: capacities.phsEnergy,
+    onChange: e => setCapacities(c => ({
+      ...c,
+      phsEnergy: parseFloat(e.target.value) || 0
+    })),
+    min: 0,
+    max: 300,
+    step: 1
+  }), /*#__PURE__*/React.createElement("span", null, "GWh"))), /*#__PURE__*/React.createElement("div", {
+    className: "cap-group"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cap-group-title"
+  }, "Flexibility"), /*#__PURE__*/React.createElement(CapacitySlider, {
+    label: "Demand Response",
+    color: TECH_DEFAULTS.dr.color,
+    value: capacities.dr,
+    onChange: v => setCap('dr', v),
+    max: 10
+  }))), /*#__PURE__*/React.createElement(Section, {
+    title: "Dispatch Logic"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mode-toggle"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: mode === 'priority' ? 'active' : '',
+    onClick: () => setMode('priority')
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mode-name"
+  }, "Priority (must-run)"), /*#__PURE__*/React.createElement("div", {
+    className: "mode-desc"
+  }, "Nuclear always runs at full. Simple & intuitive \u2014 but causes curtailment.")), /*#__PURE__*/React.createElement("button", {
+    className: mode === 'merit' ? 'active' : '',
+    onClick: () => setMode('merit')
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mode-name"
+  }, "Merit order"), /*#__PURE__*/React.createElement("div", {
+    className: "mode-desc"
+  }, "Cheapest plant dispatched first. Nuclear can back down. Realistic market logic.")))), /*#__PURE__*/React.createElement("main", {
+    className: "col-center"
+  }, /*#__PURE__*/React.createElement(Section, {
+    title: "Dispatch \u2014 24-hour profile",
+    subtitle: "Stacked generation fills the black demand line. Yellow hatch = curtailed renewables. Red hatch = unmet load (blackout)."
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "day-controls"
+  }, /*#__PURE__*/React.createElement("label", null, /*#__PURE__*/React.createElement("span", null, "Day of year"), /*#__PURE__*/React.createElement("div", {
+    className: "day-slider-row"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: 0,
+    max: 364,
+    value: doy,
+    onChange: e => setDoy(parseInt(e.target.value))
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "day-readout"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mono"
+  }, dateStr), /*#__PURE__*/React.createElement("span", {
+    className: "pill"
+  }, season))), /*#__PURE__*/React.createElement("div", {
+    className: "season-ticks"
+  }, /*#__PURE__*/React.createElement("span", {
+    onClick: () => setDoy(14)
+  }, "Jan"), /*#__PURE__*/React.createElement("span", {
+    onClick: () => setDoy(75)
+  }, "Mar"), /*#__PURE__*/React.createElement("span", {
+    onClick: () => setDoy(135)
+  }, "May"), /*#__PURE__*/React.createElement("span", {
+    onClick: () => setDoy(195)
+  }, "Jul"), /*#__PURE__*/React.createElement("span", {
+    onClick: () => setDoy(255)
+  }, "Sep"), /*#__PURE__*/React.createElement("span", {
+    onClick: () => setDoy(320)
+  }, "Nov"))), /*#__PURE__*/React.createElement("label", null, /*#__PURE__*/React.createElement("span", null, "Weather variability"), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: 0,
+    max: 1,
+    step: 0.05,
+    value: noise,
+    onChange: e => setNoise(parseFloat(e.target.value))
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "sub-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "mono"
+  }, (noise * 100).toFixed(0), "%"), /*#__PURE__*/React.createElement("button", {
+    className: "tiny-btn",
+    onClick: () => setSeed(s => s + 1)
+  }, "\u21BB new weather")))), /*#__PURE__*/React.createElement("div", {
+    className: "chart-wrap"
+  }, /*#__PURE__*/React.createElement(ChartResponsive, {
+    render: w => /*#__PURE__*/React.createElement(DispatchChart, {
+      result: result,
+      profiles: profiles,
+      width: w,
+      height: 360
+    })
+  })), /*#__PURE__*/React.createElement(Legend, {
+    items: legendItems
+  })), /*#__PURE__*/React.createElement(Section, {
+    title: "Storage state of charge",
+    subtitle: "Batteries (solid) and pumped hydro (dashed) \u2014 watch them charge during surplus and discharge at peak."
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "chart-wrap small"
+  }, /*#__PURE__*/React.createElement(ChartResponsive, {
+    render: w => /*#__PURE__*/React.createElement(StorageChart, {
+      result: result,
+      width: w,
+      height: 130
+    })
+  }))), tweaks.showTeachingTips !== false && /*#__PURE__*/React.createElement(Section, {
+    title: "What's happening here?",
+    icon: "\uD83C\uDF93"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "narrative"
+  }, narrative))), /*#__PURE__*/React.createElement("aside", {
+    className: "col-right"
+  }, /*#__PURE__*/React.createElement(Section, {
+    title: "Performance indicators",
+    subtitle: "Calculated over the 24-hour day."
+  }, /*#__PURE__*/React.createElement(KPICard, {
+    big: true,
+    label: "Renewable penetration",
+    value: kpis.renewablePct.toFixed(1),
+    unit: "%",
+    sub: `${kpis.renewableEnergy.toFixed(0)} of ${kpis.totalLoad.toFixed(0)} GWh`,
+    tone: kpis.renewablePct > 70 ? 'good' : kpis.renewablePct > 40 ? 'ok' : 'warn'
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "kpi-grid"
+  }, /*#__PURE__*/React.createElement(KPICard, {
+    label: "CO\u2082 emissions",
+    value: kpis.co2Tons.toFixed(0),
+    unit: "t",
+    sub: "from gas",
+    tone: kpis.co2Tons < 5000 ? 'good' : 'warn'
+  }), /*#__PURE__*/React.createElement(KPICard, {
+    label: "Curtailment",
+    value: kpis.curtailEnergy.toFixed(1),
+    unit: "GWh",
+    sub: "renewable energy wasted",
+    tone: kpis.curtailEnergy > 5 ? 'warn' : 'good'
+  }), /*#__PURE__*/React.createElement(KPICard, {
+    label: "Unmet load",
+    value: kpis.unmetEnergy.toFixed(2),
+    unit: "GWh",
+    sub: `${kpis.unmetHours.toFixed(1)} h blackout`,
+    tone: kpis.unmetEnergy > 0.01 ? 'bad' : 'good'
+  }), /*#__PURE__*/React.createElement(KPICard, {
+    label: "System LCOE",
+    value: kpis.systemLCOE < 10000 ? kpis.systemLCOE.toFixed(0) : '\u2014',
+    unit: "$/MWh",
+    sub: "incl. lost-load penalty",
+    tone: "neutral"
+  }))), /*#__PURE__*/React.createElement(Section, {
+    title: "Capacity factors",
+    subtitle: "Share of hours each plant ran at rated output."
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cf-list"
+  }, ['solar', 'wind', 'hydro', 'nuclear', 'gas'].map(k => capacities[k] > 0 && /*#__PURE__*/React.createElement("div", {
+    key: k,
+    className: "cf-row"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "cf-dot",
+    style: {
+      background: TECH_DEFAULTS[k].color
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "cf-label"
+  }, TECH_DEFAULTS[k].label), /*#__PURE__*/React.createElement("div", {
+    className: "cf-bar"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cf-bar-fill",
+    style: {
+      width: `${kpis.cf[k]}%`,
+      background: TECH_DEFAULTS[k].color
+    }
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "cf-val mono"
+  }, kpis.cf[k].toFixed(0), "%"))))), /*#__PURE__*/React.createElement(Section, {
+    title: "Energy mix",
+    subtitle: "Share of the day's total generation."
+  }, /*#__PURE__*/React.createElement(EnergyMixBar, {
+    energyByTech: kpis.energyByTech,
+    total: kpis.totalGen
+  })), /*#__PURE__*/React.createElement(Section, {
+    title: "Net load profile",
+    subtitle: "Demand minus renewables \u2014 what dispatchable plants must cover."
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "netload-stats"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Peak net load"), /*#__PURE__*/React.createElement("span", {
+    className: "mono"
+  }, kpis.peakNetLoad.toFixed(1), " GW")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Min net load"), /*#__PURE__*/React.createElement("span", {
+    className: "mono"
+  }, kpis.minNetLoad.toFixed(1), " GW")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Duck-curve depth"), /*#__PURE__*/React.createElement("span", {
+    className: "mono"
+  }, (kpis.peakNetLoad - kpis.minNetLoad).toFixed(1), " GW")))))));
+}
+
+// Section wrapper
+function Section({
+  title,
+  subtitle,
+  icon,
+  children
+}) {
+  return /*#__PURE__*/React.createElement("section", {
+    className: "section"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "section-head"
+  }, /*#__PURE__*/React.createElement("h3", null, icon && /*#__PURE__*/React.createElement("span", {
+    className: "section-icon"
+  }, icon), title), subtitle && /*#__PURE__*/React.createElement("p", {
+    className: "section-sub"
+  }, subtitle)), /*#__PURE__*/React.createElement("div", {
+    className: "section-body"
+  }, children));
+}
+
+// Responsive SVG width
+function ChartResponsive({
+  render
+}) {
+  const ref = useRef(null);
+  const [w, setW] = useState(720);
+  useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(entries => {
+      for (const e of entries) setW(Math.max(300, e.contentRect.width));
+    });
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+  return /*#__PURE__*/React.createElement("div", {
+    ref: ref,
+    style: {
+      width: '100%'
+    }
+  }, render(w));
+}
+function EnergyMixBar({
+  energyByTech,
+  total
+}) {
+  if (total === 0) return /*#__PURE__*/React.createElement("div", {
+    className: "muted"
+  }, "No generation.");
+  const order = ['solar', 'wind', 'hydro', 'nuclear', 'gas', 'battery', 'phs', 'dr'];
+  return /*#__PURE__*/React.createElement("div", {
+    className: "mix-wrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mix-bar"
+  }, order.map(k => {
+    const pct = energyByTech[k] / total * 100;
+    if (pct < 0.5) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: k,
+      className: "mix-seg",
+      style: {
+        width: `${pct}%`,
+        background: TECH_DEFAULTS[k].color
+      },
+      title: `${TECH_DEFAULTS[k].label}: ${pct.toFixed(1)}%`
+    });
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "mix-legend"
+  }, order.map(k => {
+    const pct = energyByTech[k] / total * 100;
+    if (pct < 0.5) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: k,
+      className: "mix-item"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "mix-dot",
+      style: {
+        background: TECH_DEFAULTS[k].color
+      }
+    }), /*#__PURE__*/React.createElement("span", {
+      className: "mix-label"
+    }, TECH_DEFAULTS[k].label), /*#__PURE__*/React.createElement("span", {
+      className: "mix-val mono"
+    }, pct.toFixed(0), "%"));
+  })));
+}
+
+// Build contextual teaching narrative
+function buildNarrative(result, capacities, mode, season) {
+  const {
+    kpis
+  } = result;
+  const notes = [];
+  if (kpis.renewablePct > 90) {
+    notes.push("This system runs almost entirely on renewables. Watch whether storage can cover the times when sun and wind aren't delivering \u2014 that's the hardest problem in decarbonization.");
+  } else if (kpis.renewablePct > 60) {
+    notes.push("Renewables are the backbone here, with firm capacity filling the gaps. Notice how gas only appears when renewables + storage can't cover load.");
+  } else if (kpis.renewablePct < 20) {
+    notes.push("This grid leans heavily on firm generation (nuclear and/or gas). Stable, but carbon-intensive unless nuclear is doing most of the work.");
+  }
+  if (kpis.curtailEnergy > 5) {
+    notes.push(`${kpis.curtailEnergy.toFixed(0)} GWh of renewable energy was curtailed \u2014 literally thrown away because supply exceeded demand and storage. Adding batteries or a bigger transmission network would capture this.`);
+  }
+  if (kpis.unmetEnergy > 0.5) {
+    notes.push(`\u26a0 ${kpis.unmetEnergy.toFixed(1)} GWh of demand went unmet (${kpis.unmetHours.toFixed(1)} h of blackout). This system is under-built for today's conditions \u2014 add firm capacity or more storage.`);
+  }
+  if (kpis.co2Tons > 8000) {
+    notes.push(`Gas ran heavily, producing ${kpis.co2Tons.toFixed(0)} tons of CO\u2082 in 24 hours. That's the decarbonization opportunity.`);
+  }
+  if (mode === 'priority' && capacities.nuclear > 15 && capacities.solar + capacities.wind > 25) {
+    notes.push("Must-run nuclear + lots of renewables = inevitable curtailment. Switching to merit-order lets nuclear back down when renewables flood the market.");
+  }
+  if (mode === 'merit' && capacities.nuclear > 0 && kpis.cf.nuclear < 85) {
+    notes.push(`Merit order let nuclear back down \u2014 its capacity factor is ${kpis.cf.nuclear.toFixed(0)}%. In reality, nuclear can't ramp this fast \u2014 this is a teaching simplification.`);
+  }
+  if (season === 'Winter') {
+    notes.push("Winter: short days limit solar, but wind is often stronger. Load peaks in the evening as heating + lighting coincide.");
+  } else if (season === 'Summer') {
+    notes.push("Summer: long solar days but air-conditioning drives an afternoon load peak \u2014 which solar handles well, until the sun sets.");
+  }
+  const battCycles = capacities.batteryEnergy > 0 ? result.gen.battery.reduce((a, b) => a + b, 0) * 0.25 / capacities.batteryEnergy : 0;
+  if (battCycles > 0.3) {
+    notes.push(`Batteries cycled about ${battCycles.toFixed(1)}\xD7 today \u2014 shifting midday surplus into the evening peak.`);
+  }
+  return notes.length ? notes.join(' ') : "Adjust any capacity or the weather slider to see how the dispatch changes. Try each preset to compare different grid strategies.";
+}
+
+// Boot
+ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
+</script>
+</body></html>
