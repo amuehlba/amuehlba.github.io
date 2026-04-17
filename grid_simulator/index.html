@@ -19,6 +19,8 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+#root { width: 100%; }
+
 .mono { font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace; }
 
 .app {
@@ -59,19 +61,25 @@ html, body {
 /* ---- LAYOUT ---- */
 .app-body {
   display: grid;
-  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr) minmax(260px, 310px);
+  grid-template-columns: minmax(0, 280px) minmax(0, 1fr) minmax(0, 290px);
   gap: 20px;
   align-items: start;
 }
 
-/* Medium: left sidebar spans both rows; center + right stack on the right */
-@media (max-width: 1150px) {
+/* prevent grid blowout — items must shrink to their track */
+.col-left, .col-center, .col-right {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Medium: 2-column — sidebar + stacked center/right */
+@media (max-width: 1050px) {
   .app-body {
-    grid-template-columns: minmax(230px, 270px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 250px) minmax(0, 1fr);
     grid-template-areas:
       "left center"
       "left right";
-    gap: 16px;
+    gap: 14px;
   }
   .col-left   { grid-area: left; }
   .col-center { grid-area: center; }
@@ -79,7 +87,7 @@ html, body {
 }
 
 /* Narrow: single column */
-@media (max-width: 640px) {
+@media (max-width: 600px) {
   .app-body {
     grid-template-columns: 1fr;
     grid-template-areas: none;
@@ -1734,7 +1742,7 @@ function ChartResponsive({
   render
 }) {
   const ref = useRef(null);
-  const [w, setW] = useState(720);
+  const [w, setW] = useState(300);
   useEffect(() => {
     if (!ref.current) return;
     const ro = new ResizeObserver(entries => {
