@@ -513,6 +513,55 @@ img {
     color: var(--color-text-muted);
 }
 
+/* ===== Teaching Resources ===== */
+.teaching-resources {
+    margin-top: 36px;
+}
+
+.teaching-resources h3 {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 16px;
+}
+
+.resource-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.resource-item {
+    padding: 20px 24px;
+    background-color: var(--color-background);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    transition: all var(--transition);
+}
+
+.resource-item:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.resource-link {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-text);
+    display: inline-block;
+    margin-bottom: 6px;
+}
+
+.resource-link:hover {
+    color: var(--color-primary);
+}
+
+.resource-desc {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
 /* ===== News ===== */
 .news-list {
     display: flex;
