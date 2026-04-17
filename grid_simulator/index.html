@@ -24,8 +24,12 @@ html, body {
 .app {
   max-width: 1640px;
   margin: 0 auto;
-  padding: 20px 24px 40px;
+  padding: 16px 20px 40px;
   min-height: 100vh;
+}
+
+@media (max-width: 640px) {
+  .app { padding: 12px 12px 32px; }
 }
 
 /* ---- HEADER ---- */
@@ -55,16 +59,33 @@ html, body {
 /* ---- LAYOUT ---- */
 .app-body {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr) 340px;
-  gap: 22px;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr) minmax(260px, 310px);
+  gap: 20px;
   align-items: start;
 }
 
-@media (max-width: 1280px) {
-  .app-body { grid-template-columns: 280px minmax(0, 1fr) 300px; gap: 16px; }
+/* Medium: left sidebar spans both rows; center + right stack on the right */
+@media (max-width: 1150px) {
+  .app-body {
+    grid-template-columns: minmax(230px, 270px) minmax(0, 1fr);
+    grid-template-areas:
+      "left center"
+      "left right";
+    gap: 16px;
+  }
+  .col-left   { grid-area: left; }
+  .col-center { grid-area: center; }
+  .col-right  { grid-area: right; }
 }
-@media (max-width: 1100px) {
-  .app-body { grid-template-columns: 1fr; }
+
+/* Narrow: single column */
+@media (max-width: 640px) {
+  .app-body {
+    grid-template-columns: 1fr;
+    grid-template-areas: none;
+    gap: 12px;
+  }
+  .col-left, .col-center, .col-right { grid-area: auto; }
 }
 
 /* ---- SECTIONS ---- */
