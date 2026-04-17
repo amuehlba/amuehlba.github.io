@@ -465,9 +465,25 @@ html, body {
 .muted { color: oklch(0.55 0.01 250); font-size: 12px; }
 </style>
 <script>window.__TWEAKS__ = {"peakGW":40,"accentHue":210,"showTeachingTips":true};</script>
-</head><body><div id="root"></div>
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+</head><body>
+<script>
+window.addEventListener('error', function(e) {
+  document.getElementById('root').innerHTML =
+    '<div style="padding:40px;font-family:monospace;color:#c00;background:#fff;border:2px solid #c00;margin:20px;border-radius:8px">' +
+    '<b>Simulator error — please reload or report to instructor</b><br><br>' +
+    (e.message || '') + '<br>' + (e.filename ? e.filename + ':' + e.lineno : '') +
+    '</div>';
+});
+window.addEventListener('unhandledrejection', function(e) {
+  document.getElementById('root').innerHTML =
+    '<div style="padding:40px;font-family:monospace;color:#c00;background:#fff;border:2px solid #c00;margin:20px;border-radius:8px">' +
+    '<b>Simulator load error — please reload</b><br><br>' + (e.reason || '') +
+    '</div>';
+});
+</script>
+<div id="root"></div>
+<script src="react.min.js"></script>
+<script src="react-dom.min.js"></script>
 
 <script>// Synthetic load, solar, wind profiles for teaching.
 // 15-minute resolution → 96 points per day.
@@ -1798,7 +1814,32 @@ function buildNarrative(result, capacities, mode, season) {
   return notes.length ? notes.join(' ') : "Adjust any capacity or the weather slider to see how the dispatch changes. Try each preset to compare different grid strategies.";
 }
 
+// Error boundary
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) {
+      return React.createElement('div', {
+        style: { padding: '40px', fontFamily: 'monospace', color: '#c00',
+                 border: '2px solid #c00', margin: '20px', borderRadius: '8px' }
+      }, 'Simulator render error: ' + this.state.error.message);
+    }
+    return this.props.children;
+  }
+}
+
 // Boot
-ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
+try {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    /*#__PURE__*/React.createElement(ErrorBoundary, null,
+      /*#__PURE__*/React.createElement(App, null)
+    )
+  );
+} catch(e) {
+  document.getElementById('root').innerHTML =
+    '<div style="padding:40px;font-family:monospace;color:#c00;border:2px solid #c00;margin:20px;border-radius:8px">' +
+    '<b>Failed to start simulator:</b><br>' + e.message + '</div>';
+}
 </script>
 </body></html>
