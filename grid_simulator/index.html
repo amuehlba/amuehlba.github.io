@@ -492,6 +492,51 @@ html, body {
 }
 
 .muted { color: oklch(0.55 0.01 250); font-size: 12px; }
+
+/* ---- EXPORT BUTTONS ---- */
+.export-btns { display: flex; gap: 6px; margin-bottom: 8px; justify-content: flex-end; }
+.export-btn {
+  background: white;
+  border: 1px solid oklch(0.85 0.01 85);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  color: oklch(0.4 0.01 250);
+  white-space: nowrap;
+}
+.export-btn:hover { border-color: oklch(0.55 0.04 210); color: oklch(0.3 0.04 210); }
+
+/* ---- BALANCE TOGGLE ---- */
+.balance-row { margin-top: 10px; padding-top: 8px; border-top: 1px dashed oklch(0.88 0.008 85); }
+.balance-label {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; cursor: pointer;
+  color: oklch(0.28 0.01 250);
+}
+.balance-label input[type="checkbox"] {
+  width: 14px; height: 14px; cursor: pointer; accent-color: oklch(0.45 0.08 210);
+}
+.balance-text { font-weight: 500; }
+
+/* ---- PRINT ---- */
+@media print {
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: white; font-size: 11px; }
+  .col-left { display: none !important; }
+  .app-header { border-bottom: 1px solid #ccc; margin-bottom: 12px; }
+  .export-btns { display: none !important; }
+  .app-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 300px) !important;
+    grid-template-areas: none !important;
+  }
+  .col-center { grid-area: auto !important; }
+  .col-right  { grid-area: auto !important; }
+  .app { padding: 8px 12px 16px; max-width: none; }
+  .section { break-inside: avoid; }
+  .app-footer { display: none; }
+}
 </style>
 <script>window.__TWEAKS__ = {"peakGW":40,"accentHue":210,"showTeachingTips":true};</script>
 </head><body>
@@ -706,7 +751,8 @@ window.Profiles = {
 
   function clamp2(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 
-  function runDispatch(opts) {
+  // Inner dispatch pass — call runDispatch() externally; _runPass for two-pass balance.
+  function _runPass(opts, battEnergy, phsEnergy, battInitSOC, phsInitSOC) {
     var capacities = opts.capacities;
     var profiles = opts.profiles;
     var mode = opts.mode || 'priority';
@@ -721,13 +767,11 @@ window.Profiles = {
     var curtail = new Array(n).fill(0);
     var unmet = new Array(n).fill(0);
 
-    var battEnergy = capacities.batteryEnergy != null ? capacities.batteryEnergy : capacities.battery * 4;
-    var phsEnergy  = capacities.phsEnergy != null ? capacities.phsEnergy : capacities.phs * 10;
     var battEff = 0.90, phsEff = 0.80;
-    var battSoC = battEnergy * 0.5;
-    var phsSoC  = phsEnergy  * 0.5;
+    var battSoC = battInitSOC;
+    var phsSoC  = phsInitSOC;
     var battSoCArr = new Array(n).fill(0);
-    var phsSoCArr = new Array(n).fill(0);
+    var phsSoCArr  = new Array(n).fill(0);
 
     for (var i = 0; i < n; i++) {
       var load = profiles.load[i];
@@ -834,6 +878,7 @@ window.Profiles = {
       gen: gen, charge: charge, curtail: curtail, unmet: unmet,
       battSoC: battSoCArr, phsSoC: phsSoCArr,
       battEnergy: battEnergy, phsEnergy: phsEnergy,
+      battInitSOC: battInitSOC, phsInitSOC: phsInitSOC,
       kpis: {
         renewablePct: renewablePct, totalLoad: totalLoad, totalGen: totalGen,
         renewableEnergy: renewableEnergy, curtailEnergy: curtailEnergy,
@@ -843,6 +888,20 @@ window.Profiles = {
         energyByTech: energyByTech
       }
     };
+  }
+
+  // Public: calls _runPass once or twice for cyclic storage balance.
+  function runDispatch(opts) {
+    var battEnergy = opts.capacities.batteryEnergy != null ? opts.capacities.batteryEnergy : opts.capacities.battery * 4;
+    var phsEnergy  = opts.capacities.phsEnergy  != null ? opts.capacities.phsEnergy  : opts.capacities.phs * 10;
+    var battInit = battEnergy * 0.5;
+    var phsInit  = phsEnergy  * 0.5;
+    if (opts.balanceStorage && (opts.capacities.battery > 0 || opts.capacities.phs > 0)) {
+      var r0 = _runPass(opts, battEnergy, phsEnergy, battInit, phsInit);
+      battInit = clamp2(battInit - (r0.battSoC[r0.battSoC.length - 1] - battInit), 0, battEnergy);
+      phsInit  = clamp2(phsInit  - (r0.phsSoC[r0.phsSoC.length  - 1] - phsInit),  0, phsEnergy);
+    }
+    return _runPass(opts, battEnergy, phsEnergy, battInit, phsInit);
   }
 
   window.Dispatch = { runDispatch: runDispatch, TECH_DEFAULTS: TECH_DEFAULTS };
@@ -939,7 +998,12 @@ function PresetCard({preset, active, onClick}) {
   return React.createElement("button", {className: `preset ${active ? 'preset-active' : ''}`, onClick: onClick}, React.createElement("div", {className: "preset-name"}, preset.name), React.createElement("div", {className: "preset-sub"}, preset.subtitle));
 }
 function Legend({items}) {
-  return React.createElement("div", {className: "legend"}, items.map(it => React.createElement("div", {key: it.key, className: "legend-item"}, React.createElement("span", {className: "legend-swatch", style: {background: it.color, ...(it.pattern === 'hatch' ? {backgroundImage: 'repeating-linear-gradient(45deg, #E8B84A 0 2px, transparent 2px 5px)', backgroundColor: 'rgba(232,184,74,0.15)'} : {})}}), React.createElement("span", {className: "legend-label"}, it.label))));
+  return React.createElement("div", {className: "legend"}, items.map(it => {
+    let swatchStyle = {background: it.color};
+    if (it.pattern === 'hatch') swatchStyle = {backgroundImage: 'repeating-linear-gradient(45deg, #E8B84A 0 2px, transparent 2px 5px)', backgroundColor: 'rgba(232,184,74,0.15)'};
+    if (it.pattern === 'chargeHatch') swatchStyle = {backgroundImage: 'repeating-linear-gradient(-45deg, #3AAFA9 0 2px, transparent 2px 5px)', backgroundColor: 'rgba(58,175,169,0.15)'};
+    return React.createElement("div", {key: it.key, className: "legend-item"}, React.createElement("span", {className: "legend-swatch", style: swatchStyle}), React.createElement("span", {className: "legend-label"}, it.label));
+  }));
 }
 window.UI = { CapacitySlider, KPICard, PresetCard, Legend };
 </script>
@@ -960,7 +1024,8 @@ function DispatchChart({
   const {
     gen,
     curtail,
-    unmet
+    unmet,
+    charge
   } = result;
   const load = profiles.load;
   const n = load.length;
@@ -1023,6 +1088,13 @@ function DispatchChart({
   const unmetTop = load.map((l, i) => `${xScale(i).toFixed(1)},${yScale(l).toFixed(1)}`);
   const unmetBot = load.map((l, i) => `${xScale(i).toFixed(1)},${yScale(l - unmet[i]).toFixed(1)}`).reverse();
   const unmetD = unmet.some(u => u > 0.01) ? `M ${unmetTop.join(' L ')} L ${unmetBot.join(' L ')} Z` : null;
+
+  // Charging band: sits between demand line and curtailment, shows surplus going to storage
+  const totalCharge = load.map((l, i) => (charge.battery[i] || 0) + (charge.phs[i] || 0));
+  const anyCharge = totalCharge.some(c => c > 0.01);
+  const chargeTopPts = anyCharge ? load.map((l, i) => `${xScale(i).toFixed(1)},${yScale(l + totalCharge[i]).toFixed(1)}`) : null;
+  const chargeBotPts = anyCharge ? load.map((l, i) => `${xScale(i).toFixed(1)},${yScale(l).toFixed(1)}`).reverse() : null;
+  const chargeD = anyCharge ? `M ${chargeTopPts.join(' L ')} L ${chargeBotPts.join(' L ')} Z` : null;
 
   // Load line
   const loadPath = 'M ' + load.map((l, i) => `${xScale(i).toFixed(1)},${yScale(l).toFixed(1)}`).join(' L ');
@@ -1090,7 +1162,26 @@ function DispatchChart({
     y2: "5",
     stroke: "#C94A4A",
     strokeWidth: "1.4"
-  }))), ticks.map((t, i) => /*#__PURE__*/React.createElement("g", {
+  }, /*#__PURE__*/React.createElement("pattern", {
+    id: "chargeHatch",
+    patternUnits: "userSpaceOnUse",
+    width: "5",
+    height: "5",
+    patternTransform: "rotate(-45)"
+  }, /*#__PURE__*/React.createElement("rect", {
+    width: "5",
+    height: "5",
+    fill: "#3AAFA9",
+    fillOpacity: "0.15"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "5",
+    stroke: "#3AAFA9",
+    strokeWidth: "1.4",
+    strokeOpacity: "0.8"
+  })))), ticks.map((t, i) => /*#__PURE__*/React.createElement("g", {
     key: i
   }, /*#__PURE__*/React.createElement("line", {
     x1: padL,
@@ -1121,7 +1212,13 @@ function DispatchChart({
     fillOpacity: "0.88",
     stroke: b.color,
     strokeWidth: "0.5"
-  })), /*#__PURE__*/React.createElement("path", {
+  })), chargeD && /*#__PURE__*/React.createElement("path", {
+    d: chargeD,
+    fill: "url(#chargeHatch)",
+    stroke: "#3AAFA9",
+    strokeWidth: "0.5",
+    strokeOpacity: "0.7"
+  }), /*#__PURE__*/React.createElement("path", {
     d: curtailD,
     fill: "url(#curtailHatch)",
     stroke: "#B8852A",
@@ -1259,6 +1356,27 @@ window.Charts = {
   StorageChart,
   TECH_ORDER_STACK
 };
+
+// Export the dispatch chart SVG as a downloadable file
+window.exportChartSVG = function() {
+  const svg = document.querySelector('.chart-wrap svg');
+  if (!svg) return;
+  const serializer = new XMLSerializer();
+  let svgStr = serializer.serializeToString(svg);
+  // Embed font fallback declaration so the SVG is self-contained
+  if (!svgStr.includes('<style>')) {
+    svgStr = svgStr.replace('<svg', '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+  }
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'grid-dispatch-chart.svg';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 </script>
 <script>// Main Simulator app.
 const {
@@ -1294,6 +1412,7 @@ function App() {
   const [noise, setNoise] = useState(0.3);
   const [seed, setSeed] = useState(7);
   const [activePreset, setActivePreset] = useState('balanced');
+  const [balanceStorage, setBalanceStorage] = useState(false);
   const peakGW = tweaks.peakGW || 40;
 
   // Build profiles
@@ -1320,8 +1439,9 @@ function App() {
   const result = useMemo(() => runDispatch({
     capacities,
     profiles,
-    mode
-  }), [capacities, profiles, mode]);
+    mode,
+    balanceStorage
+  }), [capacities, profiles, mode, balanceStorage]);
   const setCap = (k, v) => {
     setCapacities(c => {
       const next = {
@@ -1383,6 +1503,11 @@ function App() {
     color: TECH_DEFAULTS.dr.color,
     label: 'Demand Resp.'
   }, {
+    key: 'charge',
+    color: '#3AAFA9',
+    label: 'Storage charging',
+    pattern: 'chargeHatch'
+  }, {
     key: 'curt',
     color: '#E8B84A',
     label: 'Curtailed (wasted)',
@@ -1428,6 +1553,16 @@ function App() {
   }, "A teaching tool for renewable energy systems"))), /*#__PURE__*/React.createElement("div", {
     className: "header-right"
   }, /*#__PURE__*/React.createElement("div", {
+    className: "export-btns"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "export-btn",
+    onClick: function() { window.print(); },
+    title: "Print or save as PDF"
+  }, "\uD83D\uDDA8\uFE0F PDF"), /*#__PURE__*/React.createElement("button", {
+    className: "export-btn",
+    onClick: function() { window.exportChartSVG && window.exportChartSVG(); },
+    title: "Download dispatch chart as SVG"
+  }, "\u2193 SVG")), /*#__PURE__*/React.createElement("div", {
     className: "date-display"
   }, /*#__PURE__*/React.createElement("div", {
     className: "date-main"
