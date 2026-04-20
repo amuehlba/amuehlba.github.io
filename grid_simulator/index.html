@@ -1044,11 +1044,11 @@ function DispatchChart({
       };
       y += v;
     }
+    const ci = curtail[i] || 0;
     layer._curtail = {
-      y0: y,
-      y1: y + (curtail[i] || 0)
+      y0: y - ci,
+      y1: y
     };
-    y += curtail[i] || 0;
     stacked.push(layer);
     maxY = Math.max(maxY, y, load[i]);
   }
@@ -1693,7 +1693,20 @@ function App() {
     className: "mode-name"
   }, "Merit order"), /*#__PURE__*/React.createElement("div", {
     className: "mode-desc"
-  }, "Cheapest plant dispatched first. Nuclear can back down. Realistic market logic."))))), /*#__PURE__*/React.createElement("main", {
+  }, "Cheapest plant dispatched first. Nuclear can back down. Realistic market logic.")))), /*#__PURE__*/React.createElement("div", {
+    className: "balance-row"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "balance-label"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: balanceStorage,
+    onChange: function(e) { setBalanceStorage(e.target.checked); }
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "balance-text"
+  }, "Cyclic storage balance"), /*#__PURE__*/React.createElement("span", {
+    className: "cap-hint",
+    title: "Adjusts the initial state of charge so storage ends each 24-hour period where it started — realistic for multi-day operation."
+  }, "ⓘ")))), /*#__PURE__*/React.createElement("main", {
     className: "col-center"
   }, /*#__PURE__*/React.createElement(Section, {
     title: "Dispatch \u2014 24-hour profile",
